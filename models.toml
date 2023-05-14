@@ -1,0 +1,14 @@
+[raven]
+    [raven.metadata]
+        owned_by    = 'BlinkDL'
+        permission  = []
+        description = 'RWKV fine tuned for instruction answering'
+    [raven.network]
+        url = 'localhost:50051'
+[text-embedding-ada-002]
+    [text-embedding-ada-002.metadata]
+        owned_by    = 'BlinkDL'
+        permission  = []
+        description = 'RWKV fine tuned for instruction answering'
+    [text-embedding-ada-002.network]
+        url = 'localhost:50051'
