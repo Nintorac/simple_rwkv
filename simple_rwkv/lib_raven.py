@@ -1,7 +1,7 @@
 import logging
 from typing import List
 
-from get_models import MODEL, TOKENIZER_PATH, get_model_path
+from simple_rwkv.get_models import MODEL, TOKENIZER_PATH, get_model_path
 
 # if RWKV_CUDA_ON='1' then use CUDA kernel for seq mode (much faster)
 # these settings must be configured before attempting to import rwkv
@@ -21,10 +21,14 @@ logger = logging.getLogger(__file__)
 ctx_limit = 4096
 
 
-def get_model():
+def get_model(ray=False):
     model_path = get_model_path(MODEL)
 
-    model = RWKV(model=model_path, strategy=STRATEGY)  # stream mode w/some static
+    if ray:
+        from simple_rwkv import ray_model
+        model = ray_model.RayRWKV()
+    else:
+        model = RWKV(model=model_path, strategy=STRATEGY)  # stream mode w/some static
 
     pipeline = PIPELINE(model, str(TOKENIZER_PATH))
 

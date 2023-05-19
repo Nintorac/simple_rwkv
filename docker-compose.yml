@@ -1,0 +1,38 @@
+version: '3'
+
+services:
+  simple_rwkv:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python -m simple_rwkv.simple_ai serve
+    container_name: simple_rwkv
+    networks:
+      - my_network
+
+  ray_server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: serve run ray_server:d
+    container_name: ray_server
+    networks:
+      - my_network
+    ports:
+     - 6379:6379
+
+  inference_server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python -m simple_rwkv
+    container_name: inference_server
+    environment:
+      RAY_HOST: ray_server
+    ports:
+      - 8080:8080
+    networks:
+      - my_network
+
+networks:
+  my_network:

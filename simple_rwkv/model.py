@@ -3,7 +3,7 @@ import logging
 import re
 from dataclasses import dataclass
 
-import lib_raven
+from simple_rwkv import lib_raven
 import torch
 from simple_ai.api.grpc.chat.server import LanguageModel
 
@@ -25,7 +25,9 @@ def format_chat_log(chat: list[dict[str, str]] = dict()) -> str:
 class RavenRWKVModel(LanguageModel):
     gpu_id: int = 0
     device = torch.device("cuda", gpu_id) if torch.cuda.is_available() else torch.device("cpu")
-    model, pipeline = lib_raven.get_model()
+    model, pipeline = lib_raven.get_model(ray=True)
+    # model, pipeline = lib_raven.get_model(ray=False)
+    
 
     def chat(
         self,

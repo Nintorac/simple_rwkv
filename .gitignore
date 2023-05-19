@@ -1,1 +1,4 @@
 20B_tokenizer.json
+__pycache__
+.vscode
+/*.py

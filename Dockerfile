@@ -28,17 +28,17 @@ WORKDIR /home/$USER/app
 COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
 
-COPY get_models.py .
-
-# Get model weights and tokenizer
-RUN python3 get_models.py
 
 # Copy rest
 COPY . .
+
+# Download model
+RUN python -m simple_rwkv.get_models
+
+ENV PATH=${PATH}:/home/user/.local/bin
 
 # Publish port
 EXPOSE 50051:50051
 
 # Enjoy
-ENTRYPOINT ["python3", "server.py"]
-CMD ["--address", "[::]:50051"]
+ENTRYPOINT ["python3", "-m", "simple_rwkv"]

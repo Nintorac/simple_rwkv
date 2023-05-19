@@ -1,64 +1,55 @@
-import argparse
 import logging
-import shutil
-from pathlib import Path
+from concurrent import futures
 
-import uvicorn
-from fastapi.middleware.cors import CORSMiddleware
-
-from simple_ai import server
-logging.config.fileConfig('logging.conf', disable_existing_loggers=False)
-
-# get root logger
-logger = logging.getLogger(__name__) 
-# @server.app.middleware("http")
-# async def log_request_body(request: Request, call_next):
-
-origins = [
-    "app://obsidian.md",
-]
-server.app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+import grpc
+from simple_rwkv.model import RavenRWKVModel as Model
+from simple_ai.api.grpc.chat.server import (
+    LanguageModelServicer as ChatServicer,
+    llm_chat_pb2_grpc,
+)
+from simple_ai.api.grpc.completion.server import (
+    LanguageModelServicer as CompletionServicer,
+    llm_pb2_grpc,
+)
+from simple_ai.api.grpc.embedding.server import (
+    LanguageModelServicer as EmbeddingServicer,
+    llm_embed_pb2_grpc,
 )
 
-app = server.app
 
-def serve_app(host="127.0.0.1", port=8080, **kwargs):
-
-    
-    uvicorn.run(app=server.app, host=host, port=port)
-
-
-def init_app(path="./", **kwargs):
-    shutil.copy(
-        src=Path(Path(__file__).parent.absolute(), "models.toml.template"),
-        dst=Path(path, "models.toml"),
-    )
-
-
-def main():
-    parser = argparse.ArgumentParser()
-    subparsers = parser.add_subparsers()
-
-    # Init config args
-    init_parser = subparsers.add_parser("init")
-    init_parser.add_argument("--path", default="./")
-    init_parser.set_defaults(func=init_app)
-
-    # Serving args
-    serving_parser = subparsers.add_parser("serve")
-    serving_parser.add_argument("--host", default="127.0.0.1")
-    serving_parser.add_argument("--port", default=8080)
-    serving_parser.set_defaults(func=serve_app)
-
-    # Parse, call the appropriate function
-    args = parser.parse_args()
-    args.func(**args.__dict__)
+def serve(
+    address="[::]:50051",
+    chat_servicer=None,
+    embedding_servicer=None,
+    completion_servicer=None,
+    max_workers=10,
+):
+    server = grpc.server(futures.ThreadPoolExecutor(max_workers=max_workers))
+    llm_chat_pb2_grpc.add_LanguageModelServicer_to_server(chat_servicer, server)
+    llm_embed_pb2_grpc.add_LanguageModelServicer_to_server(embedding_servicer, server)
+    llm_pb2_grpc.add_LanguageModelServicer_to_server(completion_servicer, server)
+    server.add_insecure_port(address=address)
+    server.start()
+    server.wait_for_termination()
 
 
 if __name__ == "__main__":
-    main()
+    import argparse
+
+    logging.basicConfig(level=logging.INFO)
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-a", "--address", type=str, default="[::]:50051")
+    args = parser.parse_args()
+
+    logging.info(f"Starting gRPC server on {args.address}")
+    model = Model()
+    chat_servicer = ChatServicer(model=Model())
+    embedding_servicer = EmbeddingServicer(model=Model())
+    completion_servicer = CompletionServicer(model=Model())
+    serve(
+        address=args.address,
+        chat_servicer=chat_servicer,
+        embedding_servicer=embedding_servicer,
+        completion_servicer=completion_servicer,
+    )

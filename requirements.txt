@@ -9,3 +9,4 @@ tokenizers==0.13.2
 torch==2.0.0
 transformers==4.27.3
 git+https://github.com/Nintorac/ChatRWKV.git@parallel#subdirectory=rwkv_pip_package 
+aiorwlock

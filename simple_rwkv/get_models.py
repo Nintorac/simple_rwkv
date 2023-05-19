@@ -3,7 +3,7 @@ from pathlib import Path
 import requests
 from huggingface_hub import hf_hub_download
 
-MODEL = "raven-1b-ctx4096"
+MODEL = "rwkv-4-pile-169m"
 
 TOKENIZER_PATH = Path(__file__).parent / "20B_tokenizer.json"
 models = {
