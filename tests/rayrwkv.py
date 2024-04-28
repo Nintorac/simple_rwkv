@@ -5,7 +5,7 @@ import ray
 from simple_rwkv.lib_raven import get_model
 from simple_rwkv.ray_model import RayRWKV
 from simple_rwkv.ray_model import RayRWKV, _RWKV, RWKVInfer, RWKVGenerate
-from ray_server import d
+from simple_rwkv.ray_server import d
 from ray import serve
 import concurrent.futures
 

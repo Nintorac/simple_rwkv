@@ -15,13 +15,20 @@ from ray import serve
 import torch
 from simple_rwkv.lib_raven import get_model
 
+import logging
+
+logging.basicConfig(level=logging.INFO)
+
+logger = logging.getLogger(__file__)
+
 
 class _RWKV():
 
-    def __init__(self):
-        self.model, self.pipeline = get_model()
+    def __init__(self, cfg):
+        self.model, self.pipeline = get_model(cfg)
 
     def _handle_batch(self, input):
+        logger.debug('Starting _handle_batch')
         
         batch, state = zip(*input)
         b_shapes = [x.shape for x in batch]
@@ -79,7 +86,7 @@ class _RWKV():
     async def __call__(self, request: Request):
         raise NotImplementedError()
     
-@serve.deployment()
+@serve.deployment(ray_actor_options={"num_cpus": 2, "num_gpus": 0})
 class RWKVGenerate(_RWKV):
     @serve.batch(max_batch_size=128)
     async def handle_batch(self, input):
@@ -87,7 +94,7 @@ class RWKVGenerate(_RWKV):
     
     
     def batch_items(self, batch):
-        # print('bi', len(batch))
+        logger.debug('Starting generate batch_items...')
 
         
         x, y, data = zip(*[(x,0,data) for x, data in enumerate(batch)])
@@ -100,7 +107,7 @@ class RWKVGenerate(_RWKV):
 
 
 
-@serve.deployment()
+@serve.deployment(ray_actor_options={"num_cpus": 2, "num_gpus": 0})
 class RWKVInfer(_RWKV):
     @serve.batch(max_batch_size=16, batch_wait_timeout_s=0.1)
     async def handle_batch(self, input):
@@ -108,6 +115,7 @@ class RWKVInfer(_RWKV):
     
     def batch_items(self, batch):
         # print('bi', len(batch))
+        logger.debug('Starting infer batch_items...')
 
         x, y, data = zip(*[(x,y,data) for x, item in enumerate(batch) for y, data in enumerate(item.squeeze())])
 
@@ -123,9 +131,8 @@ class RayRWKV():
         self.generate = RWKVGenerate.get_handle()
         
     def forward(self, batch, state):
-        # # print("________--__")
-        # (batch.shape)
-        # # print("__--________")
+        logger.debug('Starting RayRWKV forward...')
+
 
         data = ray.put((batch, state))
         

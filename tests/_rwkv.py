@@ -5,7 +5,7 @@ import ray
 from simple_rwkv.lib_raven import get_model
 from simple_rwkv.ray_model import RayRWKV
 from simple_rwkv.ray_model import RayRWKV, _RWKV, RWKVInfer, RWKVGenerate
-from ray_server import d
+from simple_rwkv.ray_server import d
 from ray import serve
 from rwkv.utils import PIPELINE_ARGS, PIPELINE
 from simple_rwkv import lib_raven
@@ -75,7 +75,7 @@ class RWKVCompare(unittest.TestCase):
         cls.pipeline = pipeline
         cls.args = args
 
-        cls.ray_model, cls.ray_pipe = lib_raven.get_model(ray=True)
+        cls.ray_model, cls.ray_pipe = lib_raven.get_model(use_ray=True)
 
         pipeline.igenerate('hello, how are you?')
     

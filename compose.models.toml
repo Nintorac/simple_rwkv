@@ -4,4 +4,4 @@
         permission  = []
         description = 'RWKV fine tuned for instruction answering'
     [raven.network]
-        url = 'localhost:50051'
+        url = 'raven-rwkv-service-backend:50051'

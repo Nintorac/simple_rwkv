@@ -1,38 +1,49 @@
 version: '3'
 
 services:
-  simple_rwkv:
+  raven-rwkv-service-frontend:
     build:
       context: .
       dockerfile: Dockerfile
-    command: python -m simple_rwkv.simple_ai serve
-    container_name: simple_rwkv
+    command: python obsidian_serve.py serve --host=0.0.0.0 --port 8080
+    ports:
+    - 8081:8080
     networks:
       - my_network
+    volumes:
+    - ./compose.models.toml:/home/user/app/models.toml
+      
+  raven-rwkv-service-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - RAY_ADDRESS=ray://ray_server:10001
+    command: python -m simple_rwkv backend.host=0.0.0.0 use_ray=true
+    networks:
+      - my_network
+    depends_on:
+    - model_server
 
   ray_server:
     build:
       context: .
       dockerfile: Dockerfile
-    command: serve run ray_server:d
-    container_name: ray_server
+    command: ray start --head --block
     networks:
       - my_network
-    ports:
-     - 6379:6379
 
-  inference_server:
+  model_server:
     build:
       context: .
       dockerfile: Dockerfile
-    command: python -m simple_rwkv
-    container_name: inference_server
+    command: python -m simple_rwkv.ray_server
     environment:
-      RAY_HOST: ray_server
-    ports:
-      - 8080:8080
+      - RAY_ADDRESS=ray://ray_server:10001
     networks:
       - my_network
+    depends_on:
+    - ray_server
 
 networks:
   my_network:

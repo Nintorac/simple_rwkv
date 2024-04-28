@@ -1,0 +1,30 @@
+
+[tool.poetry]
+name = "simple-rwkv"
+version = "0.1.0"
+description = "A simple key-value store with read and write operations."
+authors = ["Your Name <your@email.com>"]
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.13"
+inquirer = "^3.1.3"
+ninja = "^1.11.1"
+pynvml = "^11.5.0"
+scipy = "^1.10.1"
+sentencepiece = "^0.1.99"
+simple-ai-server = {git = "https://github.com/Nintorac/simpleAI", rev = "relax-grpc"}
+tokenizers = "^0.13.3"
+transformers = "^4.29.2"
+ray = {extras = ["serve"], version = "^2.4.0"}
+aiorwlock = "^1.3.0"
+rwkv = {git = "https://github.com/Nintorac/ChatRWKV.git", rev = "parallel", subdirectory = "rwkv_pip_package"}
+requests = "2.26.0"
+gpustat = "1.0.0"
+hydra-core = "^1.3.2"
+
+[tool.poetry.dev-dependencies]
+pytest = "^6.2.2"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

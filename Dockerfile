@@ -7,10 +7,11 @@ RUN apt-get update && \
 RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
     bash Miniconda3-latest-Linux-x86_64.sh -b -p /opt/conda && \
     rm Miniconda3-latest-Linux-x86_64.sh && \
-    /opt/conda/bin/conda create -y --name py39 python=3.9 && \
+    /opt/conda/bin/conda create -y --name py311 python=3.11 && \
     /opt/conda/bin/conda clean -ya
 
-ENV PATH /opt/conda/envs/py39/bin:$PATH
+ENV PATH /home/user/.local/bin:/opt/conda/envs/py311/bin:$PATH
+
 
 RUN pip install --upgrade pip setuptools wheel
 
@@ -23,22 +24,23 @@ USER $USER
 
 # Define workdir
 WORKDIR /home/$USER/app
-
+# install torch, there are issues with poetry otherwise
+RUN pip install torch==2.0.1
 # Install project
-COPY requirements.txt requirements.txt
-RUN pip install -r requirements.txt
+COPY pyproject.toml .
 
 
 # Copy rest
-COPY . .
+COPY simple_rwkv simple_rwkv
+COPY simple_rwkv simple_rwkv
+COPY obsidian_serve.py .
+copy logging.conf .
+
+RUN pip install .
 
 # Download model
-RUN python -m simple_rwkv.get_models
-
-ENV PATH=${PATH}:/home/user/.local/bin
+# RUN python -m simple_rwkv.get_models
 
 # Publish port
 EXPOSE 50051:50051
-
 # Enjoy
-ENTRYPOINT ["python3", "-m", "simple_rwkv"]

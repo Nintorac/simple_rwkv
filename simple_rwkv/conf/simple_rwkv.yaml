@@ -1,0 +1,5 @@
+defaults:
+  - model: raven-1b-ctx4096
+  - backend: default
+
+use_ray: false

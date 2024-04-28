@@ -1,6 +1,9 @@
 import logging
 from concurrent import futures
 
+import hydra
+from omegaconf import DictConfig, OmegaConf
+
 import grpc
 from simple_rwkv.model import RavenRWKVModel as Model
 from simple_ai.api.grpc.chat.server import (
@@ -16,6 +19,8 @@ from simple_ai.api.grpc.embedding.server import (
     llm_embed_pb2_grpc,
 )
 
+logger = logging.getLogger(__file__)
+
 
 def serve(
     address="[::]:50051",
@@ -24,6 +29,8 @@ def serve(
     completion_servicer=None,
     max_workers=10,
 ):
+    
+    logger.info(f"Starting server at {address}")
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=max_workers))
     llm_chat_pb2_grpc.add_LanguageModelServicer_to_server(chat_servicer, server)
     llm_embed_pb2_grpc.add_LanguageModelServicer_to_server(embedding_servicer, server)
@@ -32,24 +39,23 @@ def serve(
     server.start()
     server.wait_for_termination()
 
-
-if __name__ == "__main__":
-    import argparse
+@hydra.main(version_base=None, config_path="conf", config_name="simple_rwkv")
+def main(cfg : DictConfig):
 
     logging.basicConfig(level=logging.INFO)
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-a", "--address", type=str, default="[::]:50051")
-    args = parser.parse_args()
-
-    logging.info(f"Starting gRPC server on {args.address}")
-    model = Model()
-    chat_servicer = ChatServicer(model=Model())
-    embedding_servicer = EmbeddingServicer(model=Model())
-    completion_servicer = CompletionServicer(model=Model())
+    address = f"{cfg.backend.host}:{cfg.backend.port}"
+    logging.info(f"Starting gRPC server on {address}")
+    model = Model(cfg)
+    chat_servicer = ChatServicer(model=model)
+    embedding_servicer = EmbeddingServicer(model=model)
+    completion_servicer = CompletionServicer(model=model)
     serve(
-        address=args.address,
+        address=address,
         chat_servicer=chat_servicer,
         embedding_servicer=embedding_servicer,
         completion_servicer=completion_servicer,
     )
+
+if __name__ == "__main__":
+    main()

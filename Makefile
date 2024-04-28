@@ -3,10 +3,10 @@ run_simple_ai_backend:
 	python -m simple_rwkv
 
 run_simple_ai_frontend:
-	python -m simple_rwkv.simple_ai serve                                    
+	python obsidian_serve.py serve
 
 run_model:
-	serve run ray_server:d
+	serve run simple_rwkv.ray_server:d
 
 init_ray:
 	ray start --head

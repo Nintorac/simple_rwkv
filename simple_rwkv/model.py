@@ -7,6 +7,9 @@ from simple_rwkv import lib_raven
 import torch
 from simple_ai.api.grpc.chat.server import LanguageModel
 
+import logging
+
+logger = logging.getLogger(__name__)
 
 def format_chat_log(chat: list[dict[str, str]] = dict()) -> str:
     raw_chat_text = ""
@@ -21,12 +24,13 @@ def format_chat_log(chat: list[dict[str, str]] = dict()) -> str:
     return raw_chat_text + "Alice:"
 
 
-@dataclass(unsafe_hash=True)
 class RavenRWKVModel(LanguageModel):
-    gpu_id: int = 0
-    device = torch.device("cuda", gpu_id) if torch.cuda.is_available() else torch.device("cpu")
-    model, pipeline = lib_raven.get_model(ray=True)
-    # model, pipeline = lib_raven.get_model(ray=False)
+
+    def __init__(self, cfg):
+
+        self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+        self.model, self.pipeline = lib_raven.get_model(cfg)
+
     
 
     def chat(
@@ -40,6 +44,8 @@ class RavenRWKVModel(LanguageModel):
         *args,
         **kwargs,
     ) -> str:
+        logger.debug('Starting RavenRWKVModel chat...')
+
         prompt = format_chat_log(chatlog)
         output = lib_raven.complete(
             prompt,
@@ -64,6 +70,7 @@ class RavenRWKVModel(LanguageModel):
     ) -> str:
         output = self.stream_complete(*args, **kwargs)
         output = "".join(output)
+        logger.debug('Starting RavenRWKVModel complete...')
 
         return output
 
@@ -79,7 +86,11 @@ class RavenRWKVModel(LanguageModel):
         # *args,
         **kwargs,
     ) -> str:
-        stop = json.loads(stop)
+        
+        logger.debug('Starting RavenRWKVModel stream_complete...')
+        stop = stop or None
+        if stop:
+            stop = json.loads(stop)
         output = lib_raven.complete(
             prompt,
             self.model,
@@ -104,6 +115,8 @@ class RavenRWKVModel(LanguageModel):
         *args,
         **kwargs,
     ):
+        logger.debug('Starting RavenRWKVModel stream...')
+        
         yield [{"role": "raven"}]
 
         stop_words = ["\n\nBob:", "\n\nAlice:"]
@@ -132,9 +145,8 @@ class RavenRWKVModel(LanguageModel):
         self,
         inputs: list = [],
     ) -> list:
-        logging.info(f"Processing inputs : {inputs}")
+        logger.debug('Starting RavenRWKVModel embed...')
+
         embeddings = lib_raven.embedding(inputs, self.model, self.pipeline)
-        logging.info(
-            f"Successfully computed embeddings (shape : {embeddings.shape}) for inputs : {inputs}"
-        )
+
         return embeddings.tolist()
